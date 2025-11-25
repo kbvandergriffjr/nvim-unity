@@ -1,11 +1,10 @@
 using System;
 using System.Diagnostics;
-using System.Collections.Generic;
-using System.IO;
 using System.Linq;
+using NvimUniy.Editor;
+using Unity.CodeEditor;
 using UnityEditor;
 using UnityEngine;
-using Unity.CodeEditor;
 
 namespace NvimUnity
 {
@@ -21,9 +20,8 @@ namespace NvimUnity
         private static bool debugging = false;
 
         private static string EditorName = "Neovim Code Editor";
-        private static string Socket =>
-            OS == "Windows" ? @"\\.\pipe\unity2025" :
-            $"{Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)}/.cache/nvimunity.sock";
+        private static string Socket => OS == "Windows" ? @"\\.\pipe\unity2025" : $"{Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)}/.cache/nvimunity.sock";
+        internal static SdkStyleProjectGeneration projectGenerator;
 
         static NeovimEditor()
         {
@@ -31,6 +29,7 @@ namespace NvimUnity
             config = ConfigManager.LoadConfig();
             config.last_project = RootFolder;
             ConfigManager.SaveConfig(config);
+            projectGenerator = new SdkStyleProjectGeneration();
         }
 
         public string GetDisplayName() => EditorName;
@@ -61,7 +60,8 @@ namespace NvimUnity
 
             bool IsRunnigInNeovim = SocketChecker.IsSocketActive(Socket);
 
-            if (line <= 0) line = 1;
+            if (line <= 0)
+                line = 1;
 
             if (!IsRunnigInNeovim)
             {
@@ -77,16 +77,16 @@ namespace NvimUnity
                             CreateNoWindow = false,
                         };
 
-                        if(debugging)
-                        UnityEngine.Debug.Log($"[NvimUnity] Executing: {psi.FileName} {psi.Arguments}");
+                        if (debugging)
+                            UnityEngine.Debug.Log($"[NvimUnity] Executing: {psi.FileName} {psi.Arguments}");
                         Process.Start(defaultApp, $"{path} {line}");
                     }
                     else
                     {
                         // Original behavior for other OSes
                         ProcessStartInfo psi = Utils.BuildProcessStartInfo(defaultApp, path, line);
-                        if(debugging)
-                        UnityEngine.Debug.Log($"[NvimUnity] Executing in terminal: {psi.FileName} {psi.Arguments}");
+                        if (debugging)
+                            UnityEngine.Debug.Log($"[NvimUnity] Executing in terminal: {psi.FileName} {psi.Arguments}");
                         Process.Start(psi);
                     }
                     return true;
@@ -163,8 +163,9 @@ namespace NvimUnity
 
         public void SyncAll()
         {
-            AssetDatabase.Refresh();
-            Project.GenerateAll();
+            // AssetDatabase.Refresh();
+            //Project.GenerateAll();
+            projectGenerator.Sync();
         }
 
         public void SyncIfNeeded(string[] addedFiles, string[] deletedFiles, string[] movedFiles, string[] movedFromFiles, string[] importedFiles)
@@ -183,10 +184,7 @@ namespace NvimUnity
 
             var fileList = addedFiles.Concat(importedFiles);
 
-            bool hasCsInAssets =
-            fileList.Any(path =>
-                    path.EndsWith(".cs", StringComparison.OrdinalIgnoreCase) &&
-                    Utils.IsInAssetsFolder(path));
+            bool hasCsInAssets = fileList.Any(path => path.EndsWith(".cs", StringComparison.OrdinalIgnoreCase) && Utils.IsInAssetsFolder(path));
 
             if (hasCsInAssets)
             {
@@ -222,4 +220,3 @@ namespace NvimUnity
         }
     }
 }
-
