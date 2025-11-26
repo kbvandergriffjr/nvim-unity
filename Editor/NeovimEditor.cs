@@ -25,6 +25,7 @@ namespace NvimUnity
                 @"\\.\pipe\unity2025" : 
                 $"{Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)}/.cache/nvimunity{RootFolder.Replace('/', '-')}.sock";
 
+        internal static SdkStyleProjectGeneration projectGenerator;
 
         static NeovimEditor()
         {
