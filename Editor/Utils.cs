@@ -139,7 +139,7 @@ namespace NvimUnity
 #endif
         }
 
-        public static ProcessStartInfo BuildProcessStartInfo(string defaultApp, string path, int line)
+        public static ProcessStartInfo BuildProcessStartInfo(string defaultApp, string socket, string path, int line)
         {
 #if !UNITY_EDITOR_WIN
             string preferredTerminal = NeovimPreferences.GetPreferredTerminal();
@@ -157,11 +157,11 @@ namespace NvimUnity
 
                 if (cmdFormat == "")
                 {
-                    args = $"{defaultApp} {path} {line}";
+                    args = $"{defaultApp} {socket} {path} {line}";
                 }
                 else
                 {
-                    args = string.Format(cmdFormat, $"{defaultApp} {path} {line}");
+                    args = string.Format(cmdFormat, $"{defaultApp} {socket} {path} {line}");
                 }
             }
 
@@ -172,7 +172,7 @@ namespace NvimUnity
                     if (IsTerminalAvailable(t.Key))
                     {
                         fileName = t.Key;
-                        args = $"{defaultApp} {path} {line}";
+                        args = $"{defaultApp} {socket} {path} {line}";
                         break;
                     }
                 }
