@@ -22,8 +22,10 @@ namespace NvimUnity
 
         private static string EditorName = "Neovim Code Editor";
         private static string Socket =>
-            OS == "Windows" ? @"\\.\pipe\unity2025" :
-            $"{Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)}/.cache/nvimunity.sock";
+            OS == "Windows" ? 
+                @"\\.\pipe\unity2025" : 
+                $"{Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)}/.cache/nvimunity{RootFolder.Replace('/', '-')}.sock";
+
 
         static NeovimEditor()
         {
@@ -84,9 +86,9 @@ namespace NvimUnity
                     else
                     {
                         // Original behavior for other OSes
-                        ProcessStartInfo psi = Utils.BuildProcessStartInfo(defaultApp, path, line);
-                        if(debugging)
-                        UnityEngine.Debug.Log($"[NvimUnity] Executing in terminal: {psi.FileName} {psi.Arguments}");
+                        ProcessStartInfo psi = Utils.BuildProcessStartInfo(defaultApp, Socket, path, line);
+                        if (debugging)
+                            UnityEngine.Debug.Log($"[NvimUnity] Executing in terminal: {psi.FileName} {psi.Arguments}");
                         Process.Start(psi);
                     }
                     return true;
