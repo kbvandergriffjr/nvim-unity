@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using NvimUniy.Editor;
@@ -14,7 +15,7 @@ namespace NvimUnity
         public static string defaultApp => EditorPrefs.GetString("kScriptsDefaultApp");
         public static string OS = Utils.GetCurrentOS();
         public static string RootFolder = Utils.GetProjectRoot();
-
+        public static List<string> Analyzers = new List<string>();
         private static Config config;
         private static bool needSaveConfig = false;
         private static bool debugging = false;
@@ -26,6 +27,7 @@ namespace NvimUnity
                 $"{Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)}/.cache/nvimunity{RootFolder.Replace('/', '-')}.sock";
 
         internal static SdkStyleProjectGeneration projectGenerator;
+        private static string analyzerInput;
 
         static NeovimEditor()
         {
@@ -135,7 +137,46 @@ namespace NvimUnity
 
         public void OnGUI()
         {
+            Analyzers = EditorPrefs.GetString("Analyzers").Split(",").ToList();
+
             GUILayout.Space(10);
+
+            EditorGUILayout.BeginHorizontal();
+            analyzerInput = GUILayout.TextField(analyzerInput);
+            if (GUILayout.Button("Add Analyzer", GUILayout.Width(100)))
+            {
+                if (!String.IsNullOrWhiteSpace(analyzerInput))
+                {
+                    Analyzers.Add(analyzerInput);
+
+                    var saveString = string.Empty;
+                    foreach (var item in Analyzers.ToList())
+                    {
+                        saveString += $"{item},";
+                    }
+                    EditorPrefs.SetString("Analyzers", saveString.Trim(','));
+                    analyzerInput = string.Empty;
+                }
+            }
+            EditorGUILayout.EndHorizontal();
+
+            foreach (var item in Analyzers.ToList())
+            {
+                EditorGUILayout.BeginHorizontal();
+                GUILayout.Label(item);
+                if (GUILayout.Button("Remove", GUILayout.Width(100)))
+                {
+                    Analyzers.Remove(item);
+
+                    var saveString = string.Empty;
+                    foreach (var saveItem in Analyzers.ToList())
+                    {
+                        saveString += $"{saveItem},";
+                    }
+                    EditorPrefs.SetString("Analyzers", saveString.Trim(','));
+                }
+                EditorGUILayout.EndHorizontal();
+            }
 
             EditorGUILayout.BeginHorizontal();
 
@@ -212,7 +253,6 @@ namespace NvimUnity
             installation = default;
             return false;
         }
-
 
         public void Save()
         {

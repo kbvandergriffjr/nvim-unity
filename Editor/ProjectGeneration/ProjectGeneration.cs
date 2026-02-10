@@ -11,6 +11,7 @@ using System.Security;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
+using NvimUnity;
 using Unity.Profiling;
 using UnityEditor;
 using UnityEditor.Compilation;
@@ -614,6 +615,7 @@ namespace NvimUniy.Editor
                 FlavoringProjectType = projectType + ":" + (int)projectType,
                 FlavoringBuildTarget = EditorUserBuildSettings.activeBuildTarget + ":" + (int)EditorUserBuildSettings.activeBuildTarget,
                 FlavoringUnityVersion = Application.unityVersion,
+                Analyzers = EditorPrefs.GetString("Analyzers").Split(","),
             };
 
             GetProjectHeader(projectProperties, out headerBuilder);
