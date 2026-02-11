@@ -1,6 +1,8 @@
 using System;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using NvimUniy.Editor;
 using Unity.CodeEditor;
 using UnityEditor;
@@ -45,7 +47,7 @@ namespace NvimUnity
             {
                 path = RootFolder;
             }
-            else if (!Project.SupportsFile(path))
+            else if (!projectGenerator.IsSupportedFile(path))
             {
                 return false;
             }
@@ -55,7 +57,7 @@ namespace NvimUnity
                 return false;
             }
 
-            if (!Project.Exists())
+            if (path.Contains(".csproj") && !File.Exists(path))
                 SyncAll();
 
             bool IsRunnigInNeovim = SocketChecker.IsSocketActive(Socket);
@@ -163,33 +165,29 @@ namespace NvimUnity
 
         public void SyncAll()
         {
-            // AssetDatabase.Refresh();
-            //Project.GenerateAll();
             projectGenerator.Sync();
         }
 
         public void SyncIfNeeded(string[] addedFiles, string[] deletedFiles, string[] movedFiles, string[] movedFromFiles, string[] importedFiles)
         {
-            if (!Project.Exists())
+            projectGenerator.SyncIfNeeded(addedFiles.Union(deletedFiles).Union(movedFiles).Union(movedFromFiles), importedFiles);
+
+            foreach (var file in importedFiles.Where(a => Path.GetExtension(a) == ".pdb"))
             {
-                SyncAll();
-                return;
-            }
+                var pdbFile = FileUtility.GetAssetFullPath(file);
 
-            if (Project.HasFilesBeenDeletedOrMoved())
-            {
-                Project.GenerateCompileIncludes();
-                return;
-            }
+                // skip Unity packages like com.unity.ext.nunit
+                if (pdbFile.IndexOf($"{Path.DirectorySeparatorChar}com.unity.", StringComparison.OrdinalIgnoreCase) > 0)
+                    continue;
 
-            var fileList = addedFiles.Concat(importedFiles);
+                var asmFile = Path.ChangeExtension(pdbFile, ".dll");
+                if (!File.Exists(asmFile)) // || !Image.IsAssembly(asmFile))
+                    continue;
 
-            bool hasCsInAssets = fileList.Any(path => path.EndsWith(".cs", StringComparison.OrdinalIgnoreCase) && Utils.IsInAssetsFolder(path));
+                // if (Symbols.IsPortableSymbolFile(pdbFile))
+                //     continue;
 
-            if (hasCsInAssets)
-            {
-                if (Project.NeedRegenerateCompileIncludes(fileList.ToList()))
-                    Project.GenerateCompileIncludes();
+                UnityEngine.Debug.LogWarning($"Unity is only able to load mdb or portable-pdb symbols. {file} is using a legacy pdb format.");
             }
         }
 
